@@ -1,0 +1,87 @@
+[project]
+name = "dozencode"
+version = "0.1.0"
+description = "Duodecimal encoder"
+authors = [
+  {name = "Colin M. Saunders", email="colinmsaunders@gmail.com"}
+]
+
+keywords = ["packaging", "python", "template"]
+
+requires-python = ">=3.9"
+
+readme = "README.md"
+
+classifiers = [
+  "Private :: Do not Upload"
+]
+
+dependencies = [
+]
+
+#
+# The installed clis: tool = "package.subpackage[.subpackage....]:function"
+#
+[project.scripts]
+agatha = "dozencode.dozencode:main"
+
+
+[build-system]
+requires = [
+    "setuptools >= 35.0.2",
+    "setuptools_scm >= 2.0.0, <3"
+]
+build-backend = "setuptools.build_meta"
+
+#
+# Additional dependencies for linting and testing
+#
+[project.optional-dependencies]
+test = [
+  "coverage",
+  "pytest"
+]
+lint = [
+  "flake8",
+  "pylint"
+]
+dev = [
+    "black",
+    "tox"
+]
+
+#
+# Linting configuration
+#
+
+[tool.pylint.basic]
+# Enums really look better not all uppercase; let's relax this
+class-const-naming-style = "any"
+
+[tool.pylint.messages_control]
+# A more human line length
+max-line-length = 120
+# A more reasonable cap on attributes
+max-attributes = 15
+
+disable = [
+  "no-else-break", # IMHO increases clarity
+  "too-few-public-methods", # There are times this is appropriate, e.g., Enums
+  "use-dict-literal", # Agree to disagree, pylint
+  "use-list-literal", # Agree to disagree, pylint
+]
+
+[tool.black]
+line-length = 120
+
+[tool.flake8]
+max-line-length = 120
+
+[tool.pycodestyle]
+max-line-length = 120
+
+#
+# Coverage configuration
+#
+[tool.coverage.run]
+source = ['dozencode']
