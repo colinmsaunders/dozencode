@@ -26,7 +26,7 @@ That is, `Z` is zero, `A` through `K` are one through eleven, `Y` through
 for digits beyond the ones.
 
 This way, you can encode a series of positive and/or negative integers
-without need for delimters. For example, the
+without need for delimiters. For example, the
 [first nine powers of negative two](https://oeis.org/A122803) in base 10:
 
 ```
@@ -43,8 +43,15 @@ Much better.
 
 ## Usage
 
+The reference implementation is Python [dozencode](https://github.com/colinmsaunders/dozencode).
+Let us know if you write your own!
+
 ```python
 from dozencode.dozencode import dozencode, dozdecode
 print(dozencode([1, 10, 100, 1000]))    # AJHdFkd 
 print(dozdecode("AXDRAdXhEdPhAid"))     # [1, -2, 4, -8, 16, -32, 64, -128, 256]
 ```
+
+## License
+
+Dozencode is released to the public domain on May 23, 2024 by Colin M. Saunders.
