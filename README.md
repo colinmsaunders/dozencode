@@ -11,15 +11,41 @@ By way of example:
 | Dozencode | Pronunciation | Base 10 |
 | --------- | ------------- | ------- |
 | Z         | zero          | 0       |
+
 | A         | one           | 1       |
 | B         | two           | 2       |
+| C         | three         | 3       |
+| D         | four          | 4       |
+| E         | five          | 5       |
+| F         | six           | 6       |
+| G         | seven         | 7       |
+| H         | eight         | 8       |
+| I         | nine          | 9       |
+| J         | ten           | 10      |
 | K         | eleven        | 11      |
-| Az        | a dozen       | 12      |
-| Aa        | a baker's dozen | 13    |
-| Azz       | a gross       | 144     |
+
 | Y         | negative one  | -1      |
 | X         | negative two  | -2      |
-| Xz        | negative twelve | -12   |
+| W         | negative three | -3      |
+| V         | negative four | -4     |
+| U         | negative five | -5      |
+| T         | negative six  | -6      |
+| S         | negative seven | -7      |
+| R         | negative eight | -8      |
+| Q         | negative nine | -9      |
+| P         | negative ten  | -10     |
+| O         | negative eleven  | -11    |
+
+| Az        | a dozen       | 12      |
+| Aa        | a baker's dozen | 13    |
+| Ab        | fourteen      | 14      |
+| Ac        | fifteen      | 14      |
+| Bz        | twenty-four   | 24      |
+| Ba        | twenty-five   | 25      |
+| Azz       | a gross       | 144     |
+
+| Yz        | negative twelve | -12   |
+| Ya        | negative thirteen | -13   | 
 
 That is, `Z` is zero, `A` through `K` are one through eleven, `Y` through
 `O` is negative one through negative 11, `z` and `a` through `k` are used
