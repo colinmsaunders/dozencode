@@ -13,70 +13,84 @@ def dozdecoder(encoded: str, writer: Callable) -> int:
     """
     # pylint: disable=R0912
     written = 0
-    integer = None
+    number = None
     negative = False
     for ch in encoded:
-        if 'A' <= ch <= 'Z':
-            if integer is not None:
-                if negative:
-                    integer = -integer
-                    negative = False
-                written += 1
-                writer(integer)
-                integer = None
-            ch = ch.lower()
-        if ch == 'z':
-            if integer is None:
-                integer = 0
-            integer *= 12
-        elif 'a' <= ch <= 'k':
-            if integer is None:
-                integer = 0
-            integer *= 12
-            integer += (ord(ch) - ord('a') + 1)
+        if '0' <= ch <= '9':
+            if number is None:
+                number = ord(ch) - ord('0')
+            else:
+                number = (number * 12) + (ord(ch) - ord('0'))
+            written += 1
+            writer(number)
+            number = None
+        elif 'j' <= ch <= 'k':
+            if number is None:
+                number = ord(ch) - ord('j') + 10
+            else:
+                number = (number * 12) + (ord(ch) - ord('j') + 10)
+            written += 1
+            writer(number)
+            number = None
+        elif ch == 'z':
+            if number is None:
+                raise ValueError(f"unexpected ch '{ch}' in '{encoded}'; lone z must be at the end of an string")      
+            number = -1 * (number * 12)
+            written += 1
+            writer(number)
+            number = None
+        elif 'A' <= ch <= 'K':
+            if number is None:
+                number = 0
+            number *= 12
+            number += (ord(ch) - ord('A') + 1)
+        elif ch == 'Z':
+            if number is None:
+                number = 0
+            number *= 12
         elif 'o' <= ch <= 'y':
-            if integer is None:
-                integer = 0
-            integer *= 12
-            integer += (ord('y') - ord(ch) + 1)
-            negative = True
+            if number is None:
+                number = -1 * (ord('y') - ord(ch) + 1)
+            else:
+                number = -1 * ((number * 12) + (ord('y') - ord(ch) + 1))
+            written += 1
+            writer(number)
+            number = None
         else:
             raise ValueError(f"unexpected ch '{ch}' in '{encoded}'")
-    if integer is not None:
-        if negative:
-            integer = -integer
-        written += 1
-        writer(integer)
+    if number is not None:
+        raise ValueError(f"unexpected end of stream in '{encoded}'")
     return written
 
 
-def dozencoder(integers: list, writer: Callable) -> int:
+def dozencoder(numbers: list, writer: Callable) -> int:
     """
     Doz-encode an iterator of integers
     """
     written = 0
-    for integer in integers:
+    for number in numbers:
         negative = False
-        if integer < 0:
+        if number < 0:
             negative = True
-            integer = -integer
-        encoded = []
-        while 1:
-            remainder = integer % 12
-            integer //= 12
-            if integer == 0:
+            number = -number
+        encoded = None
+        while 1:                  
+            remainder = number % 12
+            number //= 12
+            if encoded is None:
                 if negative:
-                    encoded.append(chr(ord('Z') - remainder))
-                elif remainder == 0:
-                    encoded.append('Z')
+                    encoded = chr(ord('z') - remainder)
+                elif remainder <= 9:
+                    encoded = chr(ord('0') + remainder)
                 else:
-                    encoded.append(chr(ord('A') + remainder - 1))
-                break
+                    encoded = chr(ord('a') + (remainder - 1))
             elif remainder == 0:
-                encoded.append('z')
+                encoded = 'Z' + encoded
             else:
-                encoded.append(chr(ord('a') + remainder - 1))
-        writer("".join(reversed(encoded)))
+                encoded = chr(ord('A') + remainder - 1) + encoded
+            if number == 0:
+                break
+        writer(encoded)
         written += 1
     return written
 
@@ -135,10 +149,10 @@ def test_dozencode():
     test_list([-16,])
     test_list([-17,])
     test_list([-100, -10, 0, 10, 100])
-    for j in range(10):
+    for j in range(1000):
         _ = j
         x = []
-        for i in range(10):
+        for i in range(1000):
             _ = i
             x.append(random.randint(-(1 << 16), (1 << 16)))
         test_list(x)
