@@ -170,33 +170,37 @@
       }
 
       // Basic encode/decode spot checks
-      testEncode([0], '0');
-      testEncode([1], '1');
-      testEncode([9], '9');
-      testEncode([10], 'j');
-      testEncode([11], 'k');
-      testEncode([12], 'A0');
-      testEncode([13], 'A1');
-      testEncode([23], 'Ak');
-      testEncode([24], 'B0');
-      testEncode([144], 'AZ0');
-      testEncode([-1], 'y');
-      testEncode([-11], 'o');
-      testEncode([-12], 'Az');
-      testEncode([-13], 'Ay');
-      testEncode([-24], 'Bz');
-      testEncode([-144], 'AZz');
+      testEncode([0], 'Z');
+      testEncode([1], 'A');
+      testEncode([9], 'I');
+      testEncode([10], 'J');
+      testEncode([11], 'K');
+      testEncode([12], '1Z');
+      testEncode([13], '1A');
+      testEncode([23], '1K');
+      testEncode([24], '2Z');
+      testEncode([120], 'XZ');
+      testEncode([132], 'YZ');
+      testEncode([144], '10Z');
+      testEncode([-1], 'a');
+      testEncode([-11], 'k');
+      testEncode([-12], '1z');
+      testEncode([-13], '1a');
+      testEncode([-24], '2z');
+      testEncode([-120], 'Xz');
+      testEncode([-132], 'Yz');
+      testEncode([-144], '10z');
 
-      testDecode('0', [0]);
-      testDecode('1', [1]);
-      testDecode('9', [9]);
-      testDecode('j', [10]);
-      testDecode('k', [11]);
-      testDecode('A0', [12]);
-      testDecode('y', [-1]);
-      testDecode('o', [-11]);
-      testDecode('Az', [-12]);
-      testDecode('Ay', [-13]);
+      testDecode('Z', [0]);
+      testDecode('A', [1]);
+      testDecode('I', [9]);
+      testDecode('J', [10]);
+      testDecode('K', [11]);
+      testDecode('1Z', [12]);
+      testDecode('a', [-1]);
+      testDecode('k', [-11]);
+      testDecode('1z', [-12]);
+      testDecode('1a', [-13]);
 
       // Multi-number sequences
       testRoundtrip([]);
@@ -241,7 +245,7 @@
       try { dozdecode('z'); assert(false, 'lone z should throw'); }
       catch(e) { assert(true, 'lone z throws: ' + e.message); }
 
-      try { dozdecode('A'); assert(false, 'incomplete stream should throw'); }
+      try { dozdecode('3'); assert(false, 'incomplete stream should throw'); }
       catch(e) { assert(true, 'incomplete stream throws: ' + e.message); }
 
       try { dozdecode('!'); assert(false, 'invalid char should throw'); }
