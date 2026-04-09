@@ -1,5 +1,10 @@
 """
 dozencode.py
+
+Character set:
+  Positive terminal (ones digit): Z=0, A-K=1-11
+  Negative terminal (ones digit): z=-(n*12) [must follow continuations], a=-1..k=-11
+  Continuation (high-order digits): 0-9=0-9, X=10, Y=11
 """
 
 
@@ -11,51 +16,46 @@ def dozdecoder(encoded: str, writer: Callable) -> int:
     """
     Doz-decode an encoded string into a list of integers
     """
-    # pylint: disable=R0912
     written = 0
     number = None
-    negative = False
     for ch in encoded:
-        if '0' <= ch <= '9':
-            if number is None:
-                number = ord(ch) - ord('0')
-            else:
-                number = (number * 12) + (ord(ch) - ord('0'))
-            written += 1
+        if ch == 'Z':
+            # Positive terminal: value 0
+            number = 0 if number is None else number * 12
             writer(number)
             number = None
-        elif 'j' <= ch <= 'k':
-            if number is None:
-                number = ord(ch) - ord('j') + 10
-            else:
-                number = (number * 12) + (ord(ch) - ord('j') + 10)
             written += 1
-            writer(number)
-            number = None
-        elif ch == 'z':
-            if number is None:
-                raise ValueError(f"unexpected ch '{ch}' in '{encoded}'; lone z must be at the end of an string")      
-            number = -1 * (number * 12)
-            written += 1
-            writer(number)
-            number = None
         elif 'A' <= ch <= 'K':
-            if number is None:
-                number = 0
-            number *= 12
-            number += (ord(ch) - ord('A') + 1)
-        elif ch == 'Z':
-            if number is None:
-                number = 0
-            number *= 12
-        elif 'o' <= ch <= 'y':
-            if number is None:
-                number = -1 * (ord('y') - ord(ch) + 1)
-            else:
-                number = -1 * ((number * 12) + (ord('y') - ord(ch) + 1))
-            written += 1
+            # Positive terminal: value 1-11
+            r = ord(ch) - ord('A') + 1
+            number = r if number is None else number * 12 + r
             writer(number)
             number = None
+            written += 1
+        elif ch == 'z':
+            # Negative-zero terminal: must follow continuation digits
+            if number is None:
+                raise ValueError(f"unexpected 'z' in '{encoded}'; lone z must follow continuation digits")
+            writer(-(number * 12))
+            number = None
+            written += 1
+        elif 'a' <= ch <= 'k':
+            # Negative terminal: value 1-11
+            r = ord(ch) - ord('a') + 1
+            number = -r if number is None else -(number * 12 + r)
+            writer(number)
+            number = None
+            written += 1
+        elif '0' <= ch <= '9':
+            # Continuation: 0-9
+            d = ord(ch) - ord('0')
+            number = d if number is None else number * 12 + d
+        elif ch == 'X':
+            # Continuation: 10
+            number = 10 if number is None else number * 12 + 10
+        elif ch == 'Y':
+            # Continuation: 11
+            number = 11 if number is None else number * 12 + 11
         else:
             raise ValueError(f"unexpected ch '{ch}' in '{encoded}'")
     if number is not None:
@@ -74,20 +74,23 @@ def dozencoder(numbers: list, writer: Callable) -> int:
             negative = True
             number = -number
         encoded = None
-        while 1:                  
+        while 1:
             remainder = number % 12
             number //= 12
             if encoded is None:
+                # Ones digit (terminal character)
                 if negative:
-                    encoded = chr(ord('z') - remainder)
-                elif remainder <= 9:
-                    encoded = chr(ord('0') + remainder)
+                    encoded = 'z' if remainder == 0 else chr(ord('a') + remainder - 1)
                 else:
-                    encoded = chr(ord('a') + (remainder - 1))
-            elif remainder == 0:
-                encoded = 'Z' + encoded
+                    encoded = 'Z' if remainder == 0 else chr(ord('A') + remainder - 1)
             else:
-                encoded = chr(ord('A') + remainder - 1) + encoded
+                # Higher-order digit (continuation character)
+                if remainder <= 9:
+                    encoded = chr(ord('0') + remainder) + encoded
+                elif remainder == 10:
+                    encoded = 'X' + encoded
+                else:
+                    encoded = 'Y' + encoded
             if number == 0:
                 break
         writer(encoded)
