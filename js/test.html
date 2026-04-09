@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dozencode</title>
+  <script src="dozencode.js"></script>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 700px;
+      margin: 40px auto;
+      padding: 0 20px;
+      background: #f8f8f8;
+      color: #222;
+    }
+    h1 { margin-bottom: 4px; }
+    p.subtitle { margin-top: 0; color: #555; font-size: 0.95em; }
+    .panel {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .panel h2 { margin-top: 0; font-size: 1.1em; }
+    label { display: block; margin-bottom: 4px; font-weight: 600; font-size: 0.9em; }
+    input[type=text] {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 8px 10px;
+      font-family: monospace;
+      font-size: 1em;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 8px 18px;
+      background: #333;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.95em;
+    }
+    button:hover { background: #555; }
+    .result {
+      margin-top: 10px;
+      font-family: monospace;
+      font-size: 1em;
+      min-height: 1.4em;
+      word-break: break-all;
+    }
+    .result.ok { color: #1a7f1a; }
+    .result.err { color: #c00; }
+    #test-output {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 16px 20px;
+      margin: 20px 0;
+      font-family: monospace;
+      font-size: 0.88em;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .pass { color: #1a7f1a; }
+    .fail { color: #c00; }
+    .summary { font-weight: bold; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <h1>Dozencode</h1>
+  <p class="subtitle">Duodecimal encoding for integer sequences &mdash; no delimiters needed.</p>
+
+  <div class="panel">
+    <h2>Encode</h2>
+    <label for="encode-input">Integers (comma-separated):</label>
+    <input type="text" id="encode-input" placeholder="e.g. 1, -2, 4, -8, 16, -32" value="1, -2, 4, -8, 16, -32, 64, -128, 256, -512">
+    <button onclick="runEncode()">Encode</button>
+    <div class="result" id="encode-result"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Decode</h2>
+    <label for="decode-input">Dozencode string:</label>
+    <input type="text" id="decode-input" placeholder="e.g. 1x4rA4BrE4JrAI4CFr">
+    <button onclick="runDecode()">Decode</button>
+    <div class="result" id="decode-result"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Tests</h2>
+    <button onclick="runTests()">Run Tests</button>
+    <div id="test-output"></div>
+  </div>
+
+  <script>
+    function runEncode() {
+      var input = document.getElementById('encode-input').value;
+      var out = document.getElementById('encode-result');
+      try {
+        var nums = input.split(',').map(function(s) {
+          var n = parseInt(s.trim(), 10);
+          if (isNaN(n)) throw new Error("not a number: " + JSON.stringify(s.trim()));
+          return n;
+        });
+        var encoded = dozencode(nums);
+        out.textContent = encoded;
+        out.className = 'result ok';
+      } catch (e) {
+        out.textContent = 'Error: ' + e.message;
+        out.className = 'result err';
+      }
+    }
+
+    function runDecode() {
+      var input = document.getElementById('decode-input').value.trim();
+      var out = document.getElementById('decode-result');
+      try {
+        var decoded = dozdecode(input);
+        out.textContent = '[' + decoded.join(', ') + ']';
+        out.className = 'result ok';
+      } catch (e) {
+        out.textContent = 'Error: ' + e.message;
+        out.className = 'result err';
+      }
+    }
+
+    // Populate decode field from encode result on encode
+    document.getElementById('encode-input').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') runEncode();
+    });
+    document.getElementById('decode-input').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') runDecode();
+    });
+
+    function runTests() {
+      var log = [];
+      var passed = 0, failed = 0;
+
+      function assert(condition, msg) {
+        if (condition) {
+          log.push('<span class="pass">PASS</span> ' + msg);
+          passed++;
+        } else {
+          log.push('<span class="fail">FAIL</span> ' + msg);
+          failed++;
+        }
+      }
+
+      function testRoundtrip(integers) {
+        var encoded = dozencode(integers);
+        var decoded = dozdecode(encoded);
+        var ok = decoded.length === integers.length &&
+          integers.every(function(v, i) { return v === decoded[i]; });
+        assert(ok, 'roundtrip ' + JSON.stringify(integers) + ' \u2192 ' + encoded + ' \u2192 ' + JSON.stringify(decoded));
+      }
+
+      function testEncode(integers, expected) {
+        var encoded = dozencode(integers);
+        assert(encoded === expected, 'encode ' + JSON.stringify(integers) + ' \u2192 ' + JSON.stringify(encoded) + (encoded === expected ? '' : ' (expected ' + JSON.stringify(expected) + ')'));
+      }
+
+      function testDecode(str, expected) {
+        var decoded = dozdecode(str);
+        var ok = decoded.length === expected.length && expected.every(function(v, i) { return v === decoded[i]; });
+        assert(ok, 'decode ' + JSON.stringify(str) + ' \u2192 ' + JSON.stringify(decoded) + (ok ? '' : ' (expected ' + JSON.stringify(expected) + ')'));
+      }
+
+      // Basic encode/decode spot checks
+      testEncode([0], '0');
+      testEncode([1], '1');
+      testEncode([9], '9');
+      testEncode([10], 'j');
+      testEncode([11], 'k');
+      testEncode([12], 'A0');
+      testEncode([13], 'A1');
+      testEncode([23], 'Ak');
+      testEncode([24], 'B0');
+      testEncode([144], 'AZ0');
+      testEncode([-1], 'y');
+      testEncode([-11], 'o');
+      testEncode([-12], 'Az');
+      testEncode([-13], 'Ay');
+      testEncode([-24], 'Bz');
+      testEncode([-144], 'AZz');
+
+      testDecode('0', [0]);
+      testDecode('1', [1]);
+      testDecode('9', [9]);
+      testDecode('j', [10]);
+      testDecode('k', [11]);
+      testDecode('A0', [12]);
+      testDecode('y', [-1]);
+      testDecode('o', [-11]);
+      testDecode('Az', [-12]);
+      testDecode('Ay', [-13]);
+
+      // Multi-number sequences
+      testRoundtrip([]);
+      testRoundtrip([0]);
+      testRoundtrip([1, 2, 3]);
+      testRoundtrip([-1]);
+      testRoundtrip([-20]);
+      testRoundtrip([-15]);
+      testRoundtrip([-16]);
+      testRoundtrip([-17]);
+      testRoundtrip([-100, -10, 0, 10, 100]);
+
+      // Verify decode(encode(x)) === x for a range
+      for (var n = -200; n <= 200; n++) {
+        var enc = dozencode([n]);
+        var dec = dozdecode(enc);
+        if (dec.length !== 1 || dec[0] !== n) {
+          assert(false, 'roundtrip single int ' + n);
+          failed++;
+        }
+      }
+      assert(true, 'roundtrip all single ints -200..200');
+
+      // Random roundtrips
+      var randPassed = true;
+      for (var t = 0; t < 500; t++) {
+        var arr = [];
+        for (var i = 0; i < 20; i++) {
+          arr.push(Math.floor(Math.random() * 131072) - 65536);
+        }
+        var enc = dozencode(arr);
+        var dec = dozdecode(enc);
+        if (dec.length !== arr.length || arr.some(function(v, i) { return v !== dec[i]; })) {
+          randPassed = false;
+          assert(false, 'random roundtrip failed: ' + JSON.stringify(arr));
+          break;
+        }
+      }
+      if (randPassed) assert(true, '500 random roundtrips of 20 integers each');
+
+      // Error cases
+      try { dozdecode('z'); assert(false, 'lone z should throw'); }
+      catch(e) { assert(true, 'lone z throws: ' + e.message); }
+
+      try { dozdecode('A'); assert(false, 'incomplete stream should throw'); }
+      catch(e) { assert(true, 'incomplete stream throws: ' + e.message); }
+
+      try { dozdecode('!'); assert(false, 'invalid char should throw'); }
+      catch(e) { assert(true, 'invalid char throws: ' + e.message); }
+
+      var summary = '<div class="summary">' +
+        (failed === 0 ? '<span class="pass">' : '<span class="fail">') +
+        'Results: ' + passed + ' passed, ' + failed + ' failed</span></div>';
+
+      document.getElementById('test-output').innerHTML = log.join('<br>') + summary;
+    }
+  </script>
+</body>
+</html>
